@@ -1,14 +1,17 @@
 App = {
+  
   web3Provider: null,
   contracts: {},
   account: '0x0',
   hasVoted: false,
 
   init: function() {
+
     return App.initWeb3();
   },
 
   initWeb3: function() {
+    // TODO: refactor conditional
     if (typeof web3 !== 'undefined') {
       // If a web3 instance is already provided by Meta Mask. // THAT IS IF YOU ALREADY HAVE LOGGED IN WITH A ACCOUNT
       App.web3Provider = web3.currentProvider;
@@ -24,7 +27,6 @@ App = {
     }
 
     return App.initContract();
-
   },
 
   initContract: function() {
@@ -50,7 +52,7 @@ App = {
         fromBlock: 0,
         toBlock: 'latest'
       }).watch(function(error, event) {
-        console.log("event triggered", event);
+        console.log("event triggered", event)
         // Reload when a new vote is recorded
         App.render();
       });
@@ -62,8 +64,8 @@ App = {
     var loader = $("#loader");
     var content = $("#content");
 
-    
-    content.show();
+    loader.show();
+    content.hide();
 
     // Load account data
     web3.eth.getCoinbase(function(err, account) {
@@ -84,14 +86,13 @@ App = {
       var candidatesSelect = $('#candidatesSelect');
       candidatesSelect.empty();
 
-      for (var i = 1; i <= candidatesCount.toNumber(); i++) {
+      for (var i = 1; i <= candidatesCount; i++) {
         electionInstance.candidates(i).then(function(candidate) {
           var id = candidate[0];
           var name = candidate[1];
           var voteCount = candidate[2];
 
           // Render candidate Result
-          console.log("id is ",id.toNumber());
           var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>"
           candidatesResults.append(candidateTemplate);
 
@@ -100,12 +101,12 @@ App = {
           candidatesSelect.append(candidateOption);
         });
       }
+
       return electionInstance.voters(App.account);
     }).then(function(hasVoted) {
+      // Do not allow a user to vote
       if(hasVoted) {
-        $('form').hide(); //really poor way to secure the app
-        //can always show the form again
-        //but doing so also raises an exception while making the transaction, so guess it works!
+        $('form').hide();
       }
       loader.hide();
       content.show();
