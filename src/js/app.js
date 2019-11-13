@@ -2,13 +2,14 @@
 //Hence you needed a lite server: Took 1 hour to realize this.
 
 App = {
-  
+
   web3Provider: null,
   contracts: {},
   account: '0x0',
   hasVoted: false,
 
   init: function() {
+
 
     return App.initWeb3();
   },
@@ -24,7 +25,6 @@ App = {
     else {
       // Specify default instance if no web3 instance provided
       App.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545');
-      ethereum.enable();
       web3 = new Web3(App.web3Provider);
     }
 
@@ -37,7 +37,8 @@ App = {
       // Connect provider to interact with contract
       App.contracts.Election.setProvider(App.web3Provider);
 
-      App.listenForEvents();
+      //App.listenForEvents(); Writing this here will render candidate 1,2 many times.
+      //removing it is also creating problems that the app is not reloading upon change
 
       return App.render();
     });
@@ -73,7 +74,10 @@ App = {
       }
     });
 
+    loader.hide();
+    content.show();
     // Load contract data
+    
     App.contracts.Election.deployed().then(function(instance) {
       electionInstance = instance;
       return electionInstance.candidatesCount();
@@ -83,52 +87,56 @@ App = {
 
       var candidatesSelect = $('#candidatesSelect');
       candidatesSelect.empty();
+      console.log("loop 1");  //declare a function and call it
+      (async function forloop(){
 
-      for (var i = 1; i <= candidatesCount; i++) {
-        electionInstance.candidates(i).then(function(candidate) {
-          var id = candidate[0];
-          var name = candidate[1];
-          var voteCount = candidate[2];
+        for (var i = 1; i <= candidatesCount; i++) {
+          
+          await electionInstance.candidates(i).then(function(candidate) {
+            var id = candidate[0];
+            var name = candidate[1];
+            var voteCount = candidate[2];
+  
+            // Render candidate Result
+            var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>"
+            candidatesResults.append(candidateTemplate);
+  
+            // Render candidate ballot option
+            var candidateOption = "<option value='" + id + "' >" + name + "</ option>"
+            candidatesSelect.append(candidateOption);
+          });
 
-          // Render candidate Result
-          var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>"
-          candidatesResults.append(candidateTemplate);
+          console.log("i = ",i);
+          console.log("candidate Results has value",document.getElementById("candidatesResults").innerText);
+        }
 
-          // Render candidate ballot option
-          var candidateOption = "<option value='" + id + "' >" + name + "</ option>"
-          candidatesSelect.append(candidateOption);
-        });
-      }
+      })();
 
-      return electionInstance.voters(App.account);
-    }).then(function(hasVoted) {
-      // Do not allow a user to vote
-      if(hasVoted) {
+      
+
+      return electionInstance.voters(App.account);  //The address in voters[] map is mapped to a bool value indic whether person voted or not
+    }).then((res)=> { //res is that bool value
+      //Hides the button
+      if(res) {
         $('form').hide();
       }
-      loader.hide();
-      content.show();
+      
     }).catch(function(error) {
       console.warn(error);
     });
   },
-
+  //here even if you unhide the vote button, if the candidate has already voted, transactionw would raise an exception if you try to vote again
   castVote: function() {
     var candidateId = $('#candidatesSelect').val();
     App.contracts.Election.deployed().then(function(instance) {
-      return instance.vote(candidateId, { from: App.account });
+      return instance.vote(candidateId, { from: App.account }); //the function in the Election.sol marks that this person has voted
     }).then(function(result) {
-      // Wait for votes to update
-      $("#content").hide();
-      $("#loader").show();
+      App.render();
+      
     }).catch(function(err) {
       console.error(err);
     });
   }
 };
 
-$(function() {
-  $(window).load(function() {
-    App.init();
-  });
-});
+App.init();

@@ -32,7 +32,7 @@ contract Election {
 
         require(_candidateId > 0 && _candidateId <= candidatesCount,"error");
 
-        voters[msg.sender] = true;
+        voters[msg.sender] = true;  //marking this person has voted now
         candidates[_candidateId].voteCount ++;
         emit votedEvent(_candidateId);
     }
