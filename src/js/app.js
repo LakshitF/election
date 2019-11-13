@@ -1,3 +1,6 @@
+//Web3 and ethereum object is injected while running it with http or https protocol and not as single static html file
+//Hence you needed a lite server: Took 1 hour to realize this.
+
 App = {
   
   web3Provider: null,
@@ -16,7 +19,6 @@ App = {
       // If a web3 instance is already provided by Meta Mask. // THAT IS IF YOU ALREADY HAVE LOGGED IN WITH A ACCOUNT
       App.web3Provider = web3.currentProvider;
       ethereum.enable();
-     // App.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545');   
       web3 = new Web3(web3.currentProvider);
     } 
     else {
@@ -31,7 +33,6 @@ App = {
 
   initContract: function() {
     $.getJSON("Election.json", function(election) {
-      // Instantiate a new truffle contract from the artifact
       App.contracts.Election = TruffleContract(election);
       // Connect provider to interact with contract
       App.contracts.Election.setProvider(App.web3Provider);
@@ -42,18 +43,15 @@ App = {
     });
   },
 
-  // Listen for events emitted from the contract
   listenForEvents: function() {
     App.contracts.Election.deployed().then(function(instance) {
-      // Restart Chrome if you are unable to receive this event
-      // This is a known issue with Metamask
-      // https://github.com/MetaMask/metamask-extension/issues/2393
+
       instance.votedEvent({}, {
         fromBlock: 0,
         toBlock: 'latest'
       }).watch(function(error, event) {
         console.log("event triggered", event)
-        // Reload when a new vote is recorded
+        
         App.render();
       });
     });

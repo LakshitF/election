@@ -17,6 +17,6 @@
   },
   "dependencies": {
     "jquery": "^3.4.1",
-    "solc": "^0.5.8"
+    "solc": "^0.5.12"
   }
 }
